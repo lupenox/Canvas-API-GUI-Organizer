@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Optional
 from canvasapi import Canvas
@@ -67,6 +67,8 @@ class CanvasCourseLister:
         year = self._extract_year(term_name, start_at, name, code)
         return CourseInfo(id=c.id, name=name, code=code, state=state, term=term_name, year=year, start_at=start_at)
 
+    from dataclasses import asdict
+
     def list_all_courses_grouped(self):
         user = self._canvas.get_current_user()
         print(f"Logged in as: {user.name}")
@@ -100,17 +102,32 @@ class CanvasCourseLister:
             else:
                 unknown.append(i)
 
+        def sort_key(k: CourseInfo):
+            return (k.year or 0, k.term or "", k.name or "")
+
         def print_section(title: str, items: list[CourseInfo]):
             print(f"\n=== {title} ({len(items)}) ===")
-            def sort_key(k: CourseInfo):
-                return (k.year or 0, k.term or "", k.name or "")
             for x in sorted(items, key=sort_key):
                 yr = f"{x.year}" if x.year else "?"
                 print(f"- {x.name} (id={x.id}, code={x.code}, state={x.state}, term={x.term}, year={yr})")
 
+        # --- printing output like before ---
         print(f"Total courses: {len(infos)}")
         print_section("Active / Available", current)
         print_section("Future or Unpublished", future_unpublished)
         print_section("Completed / Past", past_or_completed)
         if unknown:
             print_section("Unknown State", unknown)
+
+        # --- return structured object ---
+        return {
+            "total_courses": len(infos),
+            "active": current,
+            "future_unpublished": future_unpublished,
+            "past_or_completed": past_or_completed,
+            "unknown": unknown,
+            "active_ids": [c.id for c in current],
+            "active_json": [asdict(c) for c in current]
+        }
+
+            

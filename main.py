@@ -3,4 +3,4 @@ from canvas_client import CanvasCourseLister
 
 if __name__ == "__main__":
     lister = CanvasCourseLister()
-    lister.list_all_courses_grouped()
+    data = lister.list_all_courses_grouped()
